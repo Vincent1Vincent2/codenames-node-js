@@ -37,12 +37,73 @@ const getPoints = async () => {
   };
 };
 
-const shuffle = (array) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+const generateCards = async () => {
+  const activeCards = await prisma.card.findMany({
+    where: { active: true },
+  });
+
+  // If there are active cards, return them
+  if (activeCards.length > 0) {
+    return activeCards;
   }
-  return array;
+
+  // Fetch all cards from the database
+  const cards = await prisma.card.findMany({});
+
+  // Shuffle and select 25 cards
+  let selectedWords = [...cards];
+  selectedWords = selectedWords.sort(() => 0.5 - Math.random()).slice(0, 25);
+
+  // Assign the death card
+  const deathCardIndex = Math.floor(Math.random() * 25);
+  selectedWords[deathCardIndex].death = true;
+  selectedWords[deathCardIndex].active = true;
+
+  // Remove the death card from the pool of cards to assign colors
+  let teamCards = selectedWords.filter((_, index) => index !== deathCardIndex);
+
+  // Distribute 12 red cards
+  for (let i = 0; i < 12; i++) {
+    teamCards[i].color = true; // Red
+    teamCards[i].active = true;
+  }
+
+  // Distribute 12 blue cards
+  for (let i = 12; i < 24; i++) {
+    teamCards[i].color = false; // Blue
+    teamCards[i].active = true;
+  }
+
+  // Ensure all team cards are not death cards and reset chosen
+  teamCards = teamCards.map((card) => {
+    card.death = false;
+    card.chosen = false;
+    return card;
+  });
+
+  // Add the death card back to the list
+  selectedWords = [...teamCards, selectedWords[deathCardIndex]];
+
+  // Shuffle the selected cards again
+  selectedWords = selectedWords.sort(() => 0.5 - Math.random());
+
+  // Update the database with the modified cards
+  const updatePromises = selectedWords.map((card) =>
+    prisma.card.update({
+      where: { id: card.id },
+      data: {
+        color: card.color,
+        active: card.active,
+        death: card.death,
+        chosen: card.chosen,
+      },
+    })
+  );
+  // Await all update promises
+  await Promise.all(updatePromises);
+
+  // Return the modified set of cards
+  return selectedWords;
 };
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -71,8 +132,6 @@ io.on("connection", (socket) => {
         where: { active: true },
       });
 
-      const shuffledCards = shuffle(activeCards);
-      cards.push(shuffledCards);
       io.emit("cards", cards);
 
       socket.on("selectWord", async (cardId) => {
@@ -100,12 +159,10 @@ io.on("connection", (socket) => {
 
         const points = await getPoints();
         io.emit("points", points);
-        io.emit("cards", cards);
       });
 
       const points = await getPoints();
       io.emit("points", points);
-      console.log(points);
     } catch (error) {
       console.error("Error registering user:", error);
     }
@@ -135,7 +192,9 @@ server.listen(PORT, () => {
 
 const main = async () => {
   try {
-    const points = await getPoints();
+    const gotCards = await generateCards();
+    cards.push(gotCards);
+    await getPoints();
   } catch (error) {
     console.error(error);
     process.exit(1);
