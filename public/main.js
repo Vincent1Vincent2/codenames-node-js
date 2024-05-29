@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     users.forEach((user, index) => {
       const userElement = document.createElement("li");
-      userElement.textContent = user.name + " (" + user.id + ")";
+      userElement.textContent = user.name;
 
       if (index % 2 === 0) {
         redUserList.appendChild(userElement);
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     cardGrid.innerHTML = "";
 
-    cards[0].forEach((cardData) => {
+    cards.forEach((cardData) => {
       const cardElement = document.createElement("div");
       cardElement.textContent = cardData.word;
       cardElement.classList.add("card");
@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       cardElement.addEventListener("click", () => {
         socket.emit("selectWord", cardData.id);
+        socket.emit("death", cardData.id);
       });
 
       cardGrid.appendChild(cardElement);

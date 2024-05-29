@@ -12,7 +12,7 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 8080;
 
-const cards = [];
+let cards = [];
 
 const getPoints = async () => {
   const redPoints = await prisma.card.findMany({
@@ -42,52 +42,37 @@ const generateCards = async () => {
     where: { active: true },
   });
 
-  // If there are active cards, return them
   if (activeCards.length > 0) {
     return activeCards;
   }
 
-  // Fetch all cards from the database
-  const cards = await prisma.card.findMany({});
-
-  // Shuffle and select 25 cards
-  let selectedWords = [...cards];
-  selectedWords = selectedWords.sort(() => 0.5 - Math.random()).slice(0, 25);
-
-  // Assign the death card
+  const allCards = await prisma.card.findMany();
+  let selectedWords = allCards.sort(() => 0.5 - Math.random()).slice(0, 25);
   const deathCardIndex = Math.floor(Math.random() * 25);
   selectedWords[deathCardIndex].death = true;
   selectedWords[deathCardIndex].active = true;
 
-  // Remove the death card from the pool of cards to assign colors
   let teamCards = selectedWords.filter((_, index) => index !== deathCardIndex);
 
-  // Distribute 12 red cards
   for (let i = 0; i < 12; i++) {
     teamCards[i].color = true; // Red
     teamCards[i].active = true;
   }
 
-  // Distribute 12 blue cards
   for (let i = 12; i < 24; i++) {
     teamCards[i].color = false; // Blue
     teamCards[i].active = true;
   }
 
-  // Ensure all team cards are not death cards and reset chosen
   teamCards = teamCards.map((card) => {
     card.death = false;
     card.chosen = false;
     return card;
   });
 
-  // Add the death card back to the list
   selectedWords = [...teamCards, selectedWords[deathCardIndex]];
-
-  // Shuffle the selected cards again
   selectedWords = selectedWords.sort(() => 0.5 - Math.random());
 
-  // Update the database with the modified cards
   const updatePromises = selectedWords.map((card) =>
     prisma.card.update({
       where: { id: card.id },
@@ -99,10 +84,8 @@ const generateCards = async () => {
       },
     })
   );
-  // Await all update promises
-  await Promise.all(updatePromises);
 
-  // Return the modified set of cards
+  await Promise.all(updatePromises);
   return selectedWords;
 };
 
@@ -112,7 +95,7 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public/index.html");
 });
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log("A user connected: " + socket.id);
 
   socket.on("register", async (name) => {
@@ -128,11 +111,15 @@ io.on("connection", (socket) => {
 
       const users = await prisma.user.findMany();
       io.emit("updateUserList", users);
-      const activeCards = await prisma.card.findMany({
-        where: { active: true },
-      });
 
-      io.emit("cards", cards);
+      // Ensure cards are generated and emitted on registration
+      if (cards.length === 0) {
+        cards = await generateCards();
+      }
+      socket.emit("cards", cards);
+
+      const points = await getPoints();
+      socket.emit("points", points);
 
       socket.on("selectWord", async (cardId) => {
         const user = await prisma.user.findUnique({
@@ -159,10 +146,30 @@ io.on("connection", (socket) => {
 
         const points = await getPoints();
         io.emit("points", points);
+        io.emit("cards", cards);
       });
 
-      const points = await getPoints();
-      io.emit("points", points);
+      socket.on("death", async (cardId) => {
+        const user = await prisma.user.findUnique({
+          where: { id: socket.id },
+        });
+        const card = await prisma.card.findUnique({ where: { id: cardId } });
+        if (card.death === true) {
+          const oppositeTeamCards = await prisma.card.findMany({
+            where: { active: true, color: !user.team, death: false },
+          });
+          const updatePromises = oppositeTeamCards.map((card) =>
+            prisma.card.update({
+              where: { id: card.id },
+              data: { chosen: true },
+            })
+          );
+
+          await Promise.all(updatePromises);
+          const points = await getPoints();
+          io.emit("points", points);
+        }
+      });
     } catch (error) {
       console.error("Error registering user:", error);
     }
@@ -192,9 +199,7 @@ server.listen(PORT, () => {
 
 const main = async () => {
   try {
-    const gotCards = await generateCards();
-    cards.push(gotCards);
-    await getPoints();
+    cards = await generateCards();
   } catch (error) {
     console.error(error);
     process.exit(1);
