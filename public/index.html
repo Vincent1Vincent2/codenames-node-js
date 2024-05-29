@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Codenames</title>
+    <link rel="stylesheet" href="/style.css" />
     <script defer src="/socket.io/socket.io.js"></script>
     <script defer src="/main.js"></script>
   </head>
@@ -18,14 +19,16 @@
         <button type="submit">Register</button>
       </form>
     </div>
-    <div>
-      <h2>Red Team</h2>
-      <ul id="redUser"></ul>
-    </div>
-    <div id="cards" class="cards"></div>
-    <div>
-      <h2>Blue Team</h2>
-      <ul id="blueUser"></ul>
-    </div>
+    <main>
+      <div>
+        <h2>Red Team</h2>
+        <ul id="redUser"></ul>
+      </div>
+      <div id="cards" class="cards"></div>
+      <div>
+        <h2>Blue Team</h2>
+        <ul id="blueUser"></ul>
+      </div>
+    </main>
   </body>
 </html>

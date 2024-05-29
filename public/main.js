@@ -38,19 +38,16 @@ document.addEventListener("DOMContentLoaded", () => {
   socket.on("cards", (cards) => {
     const cardGrid = document.getElementById("cards");
 
+    if (!cardGrid) {
+      console.error("Card grid element not found");
+      return;
+    }
+
     cardGrid.innerHTML = "";
+    console.log(cards);
 
-    const shuffle = (array) => {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    };
-
-    const shuffledCards = shuffle(cards);
-
-    shuffledCards.forEach((cardData) => {
+    cards[0].forEach((cardData) => {
+      console.log("Creating card:", cardData);
       const cardElement = document.createElement("div");
       cardElement.textContent = cardData.word;
       cardElement.classList.add("card");

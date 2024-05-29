@@ -12,9 +12,19 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 8080;
 
+const cards = [];
+
+const shuffle = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
 app.use(express.static(path.join(__dirname, "public")));
 
-let team = app.get("/", (req, res) => {
+app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public/index.html");
 });
 
@@ -34,7 +44,13 @@ io.on("connection", (socket) => {
 
       const users = await prisma.user.findMany();
       io.emit("updateUserList", users);
-      const cards = await prisma.card.findMany({ where: { active: true } });
+      const activeCards = await prisma.card.findMany({
+        where: { active: true },
+      });
+
+      const shuffledCards = shuffle(activeCards);
+      cards.push(shuffledCards);
+      console.log(cards);
       io.emit("cards", cards);
     } catch (error) {
       console.error("Error registering user:", error);
