@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Codenames</title>
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="/main.js"></script>
+  </head>
+  <body>
+    <div id="registration">
+      <h2 id="regTitle">Register</h2>
+      <form id="registrationForm">
+        <input
+          type="text"
+          id="nameInput"
+          placeholder="Enter your name"
+          required
+        />
+        <button type="submit">Register</button>
+      </form>
+    </div>
+    <div>
+      <h2>Red Team</h2>
+      <ul id="redUser"></ul>
+    </div>
+    <div id="cards" class="cards"></div>
+    <div>
+      <h2>Blue Team</h2>
+      <ul id="blueUser"></ul>
+    </div>
+  </body>
+</html>
