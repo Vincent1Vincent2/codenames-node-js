@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const socket = io();
 
   const regCont = document.getElementById("registration");
-  const regTitle = document.getElementById("regTitle");
   const registrationForm = document.getElementById("registrationForm");
   const nameInput = document.getElementById("nameInput");
 
@@ -44,21 +43,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     cardGrid.innerHTML = "";
-    console.log(cards);
 
     cards[0].forEach((cardData) => {
-      console.log("Creating card:", cardData);
       const cardElement = document.createElement("div");
       cardElement.textContent = cardData.word;
       cardElement.classList.add("card");
 
-      if (cardData.color === true) {
+      if (cardData.color === true && cardData.death === false) {
         cardElement.style.color = "#A52A2A";
-      } else {
+      } else if (cardData.death === true) {
+        cardElement.style.color = "gray";
+      } else if (cardData.color === false && cardData.death === false) {
         cardElement.style.color = "#5D3FD3";
       }
 
+      cardElement.addEventListener("click", () => {
+        socket.emit("selectWord", cardData.id);
+      });
+
       cardGrid.appendChild(cardElement);
     });
+  });
+
+  socket.on("points", (points) => {
+    const red = document.getElementById("redPoints");
+    const blue = document.getElementById("bluePoints");
+
+    red.textContent = points.redPoints;
+    blue.textContent = points.bluePoints;
   });
 });
