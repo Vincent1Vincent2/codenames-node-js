@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const socket = io();
 
+  const regCont = document.getElementById("registration");
   const regTitle = document.getElementById("regTitle");
   const registrationForm = document.getElementById("registrationForm");
   const nameInput = document.getElementById("nameInput");
@@ -10,8 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const name = nameInput.value.trim();
     if (name) {
       socket.emit("register", name);
-      registrationForm.style.display = "none";
-      regTitle.style.display = "none";
+      regCont.style.display = "none";
     }
   });
 

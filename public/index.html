@@ -2,30 +2,50 @@
 <html>
   <head>
     <title>Codenames</title>
+
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="favicon/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="favicon/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="favicon/favicon-16x16.png"
+    />
+    <link rel="manifest" href="favicon/site.webmanifest" />
+
     <link rel="stylesheet" href="/style.css" />
     <script defer src="/socket.io/socket.io.js"></script>
     <script defer src="/main.js"></script>
   </head>
   <body>
-    <div id="registration">
+    <div class="reg" id="registration">
       <h2 id="regTitle">Register</h2>
-      <form id="registrationForm">
+      <form class="regForm" id="registrationForm">
         <input
           type="text"
           id="nameInput"
           placeholder="Enter your name"
           required
         />
-        <button type="submit">Register</button>
+        <button class="regBtn" type="submit">Register</button>
       </form>
     </div>
     <main>
-      <div>
+      <div class="redTeam">
         <h2>Red Team</h2>
         <ul id="redUser"></ul>
       </div>
       <div id="cards" class="cards"></div>
-      <div>
+      <div class="blueTeam">
         <h2>Blue Team</h2>
         <ul id="blueUser"></ul>
       </div>
