@@ -53,9 +53,9 @@ document.addEventListener("DOMContentLoaded", () => {
       cardElement.classList.add("card");
 
       if (cardData.color === true) {
-        cardElement.style.color = "red";
+        cardElement.style.color = "#A52A2A";
       } else {
-        cardElement.style.color = "blue";
+        cardElement.style.color = "#5D3FD3";
       }
 
       cardGrid.appendChild(cardElement);
