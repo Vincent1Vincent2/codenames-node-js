@@ -67,10 +67,20 @@ main {
   border-radius: 16px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
+  text-align: center;
 }
 
 .team {
   text-align: center;
+}
+
+.spymasterBtn {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 3rem;
 }
 
 .cards {
@@ -91,4 +101,5 @@ main {
   background: rgba(255, 255, 255, 0.467);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.3);
+  color: black;
 }

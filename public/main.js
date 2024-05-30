@@ -19,8 +19,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const blueUserList = document.getElementById("blueUser");
     const redSpymaster = document.getElementById("redSpymaster");
     const blueSpymaster = document.getElementById("blueSpymaster");
-    const spymasterBtn = document.getElementById("spymasterBtn");
+    const spymasterBtns = document.getElementsByClassName("spymasterBtn");
 
+    // Clear the current lists
     redUserList.innerHTML = "";
     blueUserList.innerHTML = "";
     redSpymaster.innerHTML = "";
@@ -31,14 +32,14 @@ document.addEventListener("DOMContentLoaded", () => {
       userElement.textContent = user.name;
 
       if (index % 2 === 0) {
-        //red
+        // For teams assigned to red
         if (user.spyMaster === false) {
           redUserList.appendChild(userElement);
         } else {
           redSpymaster.appendChild(userElement);
         }
       } else {
-        //blue
+        // For teams assigned to blue
         if (user.spyMaster === false) {
           blueUserList.appendChild(userElement);
         } else {
@@ -47,8 +48,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    spymasterBtn.addEventListener("click", () => {
-      socket.emit("setSpymaster", socket.id);
+    // Add event listeners to all spymaster buttons
+    Array.from(spymasterBtns).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        socket.emit("setSpymaster", socket.id);
+      });
     });
   });
 
