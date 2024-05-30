@@ -112,7 +112,6 @@ io.on("connection", async (socket) => {
       const users = await prisma.user.findMany();
       io.emit("updateUserList", users);
 
-      // Ensure cards are generated and emitted on registration
       if (cards.length === 0) {
         cards = await generateCards();
       }
@@ -120,58 +119,91 @@ io.on("connection", async (socket) => {
 
       const points = await getPoints();
       socket.emit("points", points);
-
-      socket.on("selectWord", async (cardId) => {
-        const user = await prisma.user.findUnique({
-          where: { id: socket.id },
-        });
-        const card = await prisma.card.findUnique({ where: { id: cardId } });
-
-        if (card.color === true && user.team === true && card.death === false) {
-          await prisma.card.update({
-            where: { id: card.id },
-            data: { chosen: true },
-          });
-        }
-        if (
-          card.color === false &&
-          user.team === false &&
-          card.death === false
-        ) {
-          await prisma.card.update({
-            where: { id: card.id },
-            data: { chosen: true },
-          });
-        }
-
-        const points = await getPoints();
-        io.emit("points", points);
-        io.emit("cards", cards);
-      });
-
-      socket.on("death", async (cardId) => {
-        const user = await prisma.user.findUnique({
-          where: { id: socket.id },
-        });
-        const card = await prisma.card.findUnique({ where: { id: cardId } });
-        if (card.death === true) {
-          const oppositeTeamCards = await prisma.card.findMany({
-            where: { active: true, color: !user.team, death: false },
-          });
-          const updatePromises = oppositeTeamCards.map((card) =>
-            prisma.card.update({
-              where: { id: card.id },
-              data: { chosen: true },
-            })
-          );
-
-          await Promise.all(updatePromises);
-          const points = await getPoints();
-          io.emit("points", points);
-        }
-      });
     } catch (error) {
       console.error("Error registering user:", error);
+    }
+  });
+
+  socket.on("getUserList", async () => {
+    const users = await prisma.user.findMany();
+    socket.emit("updateUserList", users);
+  });
+
+  socket.on("selectWord", async (cardId) => {
+    const user = await prisma.user.findUnique({
+      where: { id: socket.id },
+    });
+    const card = await prisma.card.findUnique({ where: { id: cardId } });
+
+    if (card.color === true && user.team === true && card.death === false) {
+      await prisma.card.update({
+        where: { id: card.id },
+        data: { chosen: true },
+      });
+    }
+    if (card.color === false && user.team === false && card.death === false) {
+      await prisma.card.update({
+        where: { id: card.id },
+        data: { chosen: true },
+      });
+    }
+
+    const points = await getPoints();
+    io.emit("points", points);
+    io.emit("cards", cards);
+  });
+
+  socket.on("death", async (cardId) => {
+    const user = await prisma.user.findUnique({
+      where: { id: socket.id },
+    });
+    const card = await prisma.card.findUnique({ where: { id: cardId } });
+    if (card.death === true) {
+      const oppositeTeamCards = await prisma.card.findMany({
+        where: { active: true, color: !user.team, death: false },
+      });
+      const updatePromises = oppositeTeamCards.map((card) =>
+        prisma.card.update({
+          where: { id: card.id },
+          data: { chosen: true },
+        })
+      );
+
+      await Promise.all(updatePromises);
+      const points = await getPoints();
+      io.emit("points", points);
+    }
+  });
+
+  socket.on("setSpymaster", async (userId) => {
+    try {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+
+      if (!user) {
+        console.error(`User with id ${userId} not found`);
+        return;
+      }
+
+      const team = await prisma.user.findMany({
+        where: { team: user.team },
+      });
+
+      const spymasterExists = team.some((u) => u.spyMaster);
+
+      if (spymasterExists) {
+        console.log(`A spymaster already exists in team ${user.team}`);
+        return;
+      }
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { spyMaster: true },
+      });
+
+      const allUsers = await prisma.user.findMany();
+      io.emit("updateUserList", allUsers);
+    } catch (error) {
+      console.error("Error setting spymaster:", error);
     }
   });
 
